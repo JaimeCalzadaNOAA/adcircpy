@@ -4,12 +4,13 @@ on: [ push ]
 
 jobs:
   tests:
-    name: Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       matrix:
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ 3.7, 3.8, 3.9 ]
+        os: [ ubuntu-latest, windows-latest ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -23,6 +24,14 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}-
+      - name: Install wheel
+        run: pip install wheel
+      - name: Run setup.py on Windows
+        if: contains(matrix.os, 'windows')
+        run: python setup.py install
+      - name: Install netCDF4 library on Linux
+        if: contains(matrix.os, 'ubuntu')
+        run: sudo apt-get update -y && sudo apt-get install -y libnetcdf-dev libnetcdff-dev
       - name: Install dependencies
         run: |
           apt update -y && apt install -y libnetcdf-dev libnetcdff-dev
